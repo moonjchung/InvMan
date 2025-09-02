@@ -53,6 +53,17 @@ def get_items(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Item).offset(skip).limit(limit).all()
 
 
+def get_items_generator(db: Session, chunk_size: int = 1000):
+    offset = 0
+    while True:
+        items = db.query(Item).offset(offset).limit(chunk_size).all()
+        if not items:
+            break
+        for item in items:
+            yield item
+        offset += chunk_size
+
+
 def get_item_by_sku(db: Session, sku: str):
     return db.query(Item).filter(Item.sku == sku).first()
 
@@ -138,8 +149,7 @@ def create_purchase_order(db: Session, po_in: PurchaseOrderCreate) -> PurchaseOr
     po_data = po_in.dict(exclude={"line_items"})
     db_po = PurchaseOrder(**po_data)
     db.add(db_po)
-    db.commit()
-    db.refresh(db_po)
+    db.flush()
 
     for line_item_in in po_in.line_items:
         db_line_item = PurchaseOrderLineItem(

@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     SENTRY_DSN: str | None = None
     FIRST_SUPERUSER_EMAIL: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
+    FIRST_MANAGER_EMAIL: EmailStr
+    FIRST_MANAGER_PASSWORD: str
+    FIRST_STAFF_EMAIL: EmailStr
+    FIRST_STAFF_PASSWORD: str
+    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     class Config:
         env_file = ".env"

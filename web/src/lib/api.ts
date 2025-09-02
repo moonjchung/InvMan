@@ -1,28 +1,17 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
-function getAuthHeaders() {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    return {};
-  }
-  return {
-    'Authorization': `Bearer ${token}`,
-  };
-}
-
 async function request(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
   const headers: HeadersInit = {
-    ...getAuthHeaders(),
     ...options.headers,
   };
 
-  if (!(options.body instanceof FormData)) {
+  if (options.body && !(options.body instanceof FormData) && !(options.body instanceof URLSearchParams) && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, { ...options, headers, credentials: 'include' });
 
   if (!response.ok) {
     // TODO: better error handling
@@ -39,6 +28,18 @@ async function request(endpoint: string, options: RequestInit = {}) {
 
 // Auth
 export const getUsersMe = () => request('/users/me');
+export const login = (data: any) => {
+  const body = new URLSearchParams();
+  body.append('username', data.username);
+  body.append('password', data.password);
+  return request('/auth/login', {
+    method: 'POST',
+    body,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
+};
 
 // Settings
 export const getSettings = () => request('/settings');
@@ -52,8 +53,7 @@ export const deleteItem = (id: number) => request(`/items/${id}`, { method: 'DEL
 export const adjustStock = (id: number, data: any) => request(`/items/${id}/adjust`, { method: 'POST', body: JSON.stringify(data) });
 export const exportItemsCsv = async () => {
   const url = `${API_BASE_URL}/items/export/csv`;
-  const headers = getAuthHeaders();
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, { credentials: 'include' });
   if (!response.ok) {
     throw new Error('Export failed');
   }

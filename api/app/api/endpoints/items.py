@@ -31,7 +31,8 @@ def import_csv(
             item_in = schemas.ItemCreate(**row)
             crud.upsert_item(db, item_in=item_in)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error processing CSV file: {e}")
+        # TODO: Add logging
+        raise HTTPException(status_code=400, detail="Error processing CSV file. Please check the file format.")
 
     return {"message": "CSV imported successfully"}
 
@@ -44,20 +45,24 @@ def export_csv(
     """
     Export items to CSV.
     """
-    output = io.StringIO()
-    writer = csv.writer(output)
+    def iter_items():
+        output = io.StringIO()
+        writer = csv.writer(output)
 
-    items = crud.get_items(db, limit=None) # Get all items
+        # Write header
+        writer.writerow(["id", "sku", "name", "description", "price", "stock_level", "unit", "category_id", "supplier_id", "reorder_point", "is_active"])
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
 
-    # Write header
-    writer.writerow(["id", "sku", "name", "description", "price", "stock_level", "unit", "category_id", "supplier_id", "reorder_point", "is_active"])
+        items_generator = crud.get_items_generator(db)
+        for item in items_generator:
+            writer.writerow([item.id, item.sku, item.name, item.description, item.price, item.stock_level, item.unit, item.category_id, item.supplier_id, item.reorder_point, item.is_active])
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
 
-    # Write rows
-    for item in items:
-        writer.writerow([item.id, item.sku, item.name, item.description, item.price, item.stock_level, item.unit, item.category_id, item.supplier_id, item.reorder_point, item.is_active])
-
-    output.seek(0)
-    return StreamingResponse(output, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=items.csv"})
+    return StreamingResponse(iter_items(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=items.csv"})
 
 
 @router.get("/", response_model=List[schemas.Item])
@@ -161,7 +166,7 @@ def adjust_stock(
     db: Session = Depends(get_db),
     item_id: int,
     adjustment_in: StockAdjustment,
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.User = Depends(get_current_active_manager_user),
 ):
     """
     Adjust stock for an item.
@@ -192,7 +197,10 @@ def get_item_label(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    pdf_buffer = pdf.generate_item_label(item)
+    try:
+        pdf_buffer = pdf.generate_item_label(item)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     headers = {
         'Content-Disposition': f'inline; filename="{item.sku}_label.pdf"'

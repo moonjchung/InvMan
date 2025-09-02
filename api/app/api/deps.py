@@ -1,5 +1,4 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
 from jose import jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
@@ -9,12 +8,25 @@ from app.core import security
 from app.core.config import settings
 from app.deps import get_db
 
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
+def get_token_from_cookie(request: Request) -> str | None:
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
+    # The token is in the format "Bearer <token>"
+    parts = token.split()
+    if len(parts) == 2 and parts[0] == "Bearer":
+        return parts[1]
+    return None
 
 def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
+    db: Session = Depends(get_db), token: str = Depends(get_token_from_cookie)
 ) -> models.User:
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]

@@ -34,15 +34,15 @@ def seed_data():
             crud.create_user_by_admin(db, user=user_in)
             print("Admin user created.")
 
-        manager_user = crud.get_user_by_email(db, email="manager@example.com")
+        manager_user = crud.get_user_by_email(db, email=settings.FIRST_MANAGER_EMAIL)
         if not manager_user:
-            user_in = schemas.UserCreateByAdmin(email="manager@example.com", password="managerpassword", role="manager")
+            user_in = schemas.UserCreateByAdmin(email=settings.FIRST_MANAGER_EMAIL, password=settings.FIRST_MANAGER_PASSWORD, role="manager")
             crud.create_user_by_admin(db, user=user_in)
             print("Manager user created.")
 
-        staff_user = crud.get_user_by_email(db, email="staff@example.com")
+        staff_user = crud.get_user_by_email(db, email=settings.FIRST_STAFF_EMAIL)
         if not staff_user:
-            user_in = schemas.UserCreateByAdmin(email="staff@example.com", password="staffpassword", role="staff")
+            user_in = schemas.UserCreateByAdmin(email=settings.FIRST_STAFF_EMAIL, password=settings.FIRST_STAFF_PASSWORD, role="staff")
             crud.create_user_by_admin(db, user=user_in)
             print("Staff user created.")
 
