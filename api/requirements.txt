@@ -1,0 +1,24 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+psycopg2-binary
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+pydantic-settings
+typer
+postmark
+reportlab
+python-barcode[images]
+slowapi
+sentry-sdk[fastapi]
+
+# Testing
+pytest
+httpx
+
+# Linting & Type Checking
+ruff
+mypy
+sqlalchemy-stubs
