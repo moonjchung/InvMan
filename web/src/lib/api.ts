@@ -1,14 +1,14 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
-async function request(endpoint: string, options: RequestInit = {}) {
+async function request(endpoint: string, options: RequestInit = {}, contentType: string | null = 'application/json') {
   const url = `${API_BASE_URL}${endpoint}`;
   
   const headers: HeadersInit = {
     ...options.headers,
   };
 
-  if (options.body && !(options.body instanceof FormData) && !(options.body instanceof URLSearchParams) && !headers['Content-Type']) {
-    headers['Content-Type'] = 'application/json';
+  if (contentType) {
+    headers['Content-Type'] = contentType;
   }
 
   const response = await fetch(url, { ...options, headers, credentials: 'include' });
@@ -35,10 +35,7 @@ export const login = (data: any) => {
   return request('/auth/login', {
     method: 'POST',
     body,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-  });
+  }, 'application/x-www-form-urlencoded');
 };
 
 // Settings
@@ -72,7 +69,7 @@ export const importItemsCsv = (file: File) => {
   return request('/items/import/csv', {
     method: 'POST',
     body: formData,
-  });
+  }, null);
 };
 
 // Categories
