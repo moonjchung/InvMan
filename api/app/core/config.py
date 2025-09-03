@@ -13,10 +13,10 @@ class Settings(BaseSettings):
     SENTRY_DSN: str | None = None
     FIRST_SUPERUSER_EMAIL: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
-    FIRST_MANAGER_EMAIL: EmailStr
-    FIRST_MANAGER_PASSWORD: str
-    FIRST_STAFF_EMAIL: EmailStr
-    FIRST_STAFF_PASSWORD: str
+    FIRST_MANAGER_EMAIL: EmailStr = "manager@example.com"
+    FIRST_MANAGER_PASSWORD: str = "manager"
+    FIRST_STAFF_EMAIL: EmailStr = "staff@example.com"
+    FIRST_STAFF_PASSWORD: str = "staff"
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     class Config:
