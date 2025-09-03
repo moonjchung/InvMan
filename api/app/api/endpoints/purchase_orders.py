@@ -1,4 +1,5 @@
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -15,7 +16,7 @@ def create_purchase_order(
     db: Session = Depends(get_db),
     po_in: schemas.PurchaseOrderCreate,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.PurchaseOrder:
     """
     Create new purchase order.
     """
@@ -28,7 +29,7 @@ def read_purchase_orders(
     skip: int = 0,
     limit: int = 100,
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> List[models.PurchaseOrder]:
     """
     Retrieve purchase orders.
     """
@@ -41,7 +42,7 @@ def read_purchase_order(
     db: Session = Depends(get_db),
     po_id: int,
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> models.PurchaseOrder:
     """
     Get purchase order by ID.
     """
@@ -57,7 +58,7 @@ def update_purchase_order(
     po_id: int,
     po_in: schemas.PurchaseOrderUpdate,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.PurchaseOrder:
     """
     Update a purchase order.
     """
@@ -74,13 +75,13 @@ def receive_purchase_order(
     po_id: int,
     received_items: List[PurchaseOrderLineItemReceive],
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> models.PurchaseOrder:
     """
     Receive items for a purchase order.
     """
     po = crud.receive_purchase_order(
         db=db, po_id=po_id, received_items=received_items, user_id=current_user.id
     )
-    if not po:
+    if po is None:
         raise HTTPException(status_code=404, detail="Purchase Order not found")
     return po

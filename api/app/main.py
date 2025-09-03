@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Awaitable, Callable, Union, cast
+
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.requests import Request
+from starlette.responses import Response
 from slowapi.middleware import SlowAPIMiddleware
 import sentry_sdk
 
@@ -21,7 +25,11 @@ from app.api.endpoints import (
 
 app = FastAPI()
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+ExceptionHandler = Callable[[Request, Exception], Union[Response, Awaitable[Response]]]
+app.add_exception_handler(
+    RateLimitExceeded,
+    cast(ExceptionHandler, _rate_limit_exceeded_handler),
+)
 app.add_middleware(SlowAPIMiddleware)
 
 if settings.SENTRY_DSN:
@@ -52,5 +60,5 @@ app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 
 
 @app.get("/healthz")
-def read_root():
+def read_root() -> dict[str, str]:
     return {"status": "ok"}

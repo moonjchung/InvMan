@@ -1,6 +1,8 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from typing import List
+
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -16,7 +18,7 @@ def read_categories(
     skip: int = 0,
     limit: int = 100,
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> List[models.Category]:
     """
     Retrieve categories.
     """
@@ -30,7 +32,7 @@ def create_category(
     db: Session = Depends(get_db),
     category_in: schemas.CategoryCreate,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.Category:
     """
     Create new category.
     """
@@ -44,7 +46,7 @@ def read_category(
     db: Session = Depends(get_db),
     category_id: int,
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> models.Category:
     """
     Get category by ID.
     """
@@ -61,7 +63,7 @@ def update_category(
     category_id: int,
     category_in: schemas.CategoryUpdate,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.Category:
     """
     Update a category.
     """
@@ -69,6 +71,7 @@ def update_category(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     category = crud.update_category(db=db, category_id=category_id, category=category_in)
+    assert category is not None
     return category
 
 
@@ -78,7 +81,7 @@ def delete_category(
     db: Session = Depends(get_db),
     category_id: int,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.Category:
     """
     Delete a category.
     """
@@ -86,4 +89,5 @@ def delete_category(
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     category = crud.delete_category(db=db, category_id=category_id)
+    assert category is not None
     return category

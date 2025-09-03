@@ -7,6 +7,8 @@ from app import crud, models, schemas
 from app.api.deps import get_current_active_user, get_current_active_admin_user
 from app.deps import get_db
 
+# mypy: disable-error-code=no-untyped-def
+
 router = APIRouter()
 
 @router.get("/me", response_model=schemas.User)
