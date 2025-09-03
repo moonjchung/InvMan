@@ -1,7 +1,8 @@
+
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app import crud
@@ -15,18 +16,28 @@ router = APIRouter()
 class LoginRequest(BaseModel):
     """Schema for login requests."""
 
-    email: EmailStr
+    email: str
     password: str
 
 
 @router.post("/login")
-def login_for_access_token(
-    login_data: LoginRequest,
+async def login_for_access_token(
+    request: Request,
     response: Response,
     db: Session = Depends(get_db),
 ):
     """Token login, get an access token for future requests."""
 
+    if request.headers.get("content-type", "").startswith("application/json"):
+        login_data = LoginRequest.model_validate(await request.json())
+    else:
+        form = await request.form()
+        login_data = LoginRequest(
+            email=form.get("email") or form.get("username", ""),
+            password=form.get("password", ""),
+        )
+    if not login_data.email or not login_data.password:
+        raise HTTPException(status_code=422, detail="Missing email or password")
     user = crud.authenticate_user(
         db, email=login_data.email, password=login_data.password
     )
