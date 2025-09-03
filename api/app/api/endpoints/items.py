@@ -30,9 +30,12 @@ def import_csv(
         for row in reader:
             item_in = schemas.ItemCreate(**row)
             crud.upsert_item(db, item_in=item_in)
-    except Exception as e:
+    except Exception:
         # TODO: Add logging
-        raise HTTPException(status_code=400, detail="Error processing CSV file. Please check the file format.")
+        raise HTTPException(
+            status_code=400,
+            detail="Error processing CSV file. Please check the file format.",
+        )
 
     return {"message": "CSV imported successfully"}
 

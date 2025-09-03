@@ -12,25 +12,25 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-
     const body = new URLSearchParams({
       username: email,
       password,
     });
 
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: body.toString(),
-    });
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      localStorage.setItem('token', data.access_token);
-      router.push('/');
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.access_token);
+        router.push('/');
+      }
     } catch (error) {
       // Handle error
       console.error('Login failed', error);

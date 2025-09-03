@@ -8,6 +8,9 @@ passlib[bcrypt]
 python-jose[cryptography]
 pydantic-settings
 typer
+email-validator
+postmarker
+python-multipart
 postmark
 reportlab
 python-barcode[images]

@@ -4,7 +4,6 @@ import barcode
 from barcode.writer import ImageWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
-from reportlab.lib.pagesizes import letter
 
 from app.models.item import Item
 
