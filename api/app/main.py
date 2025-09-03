@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 import sentry_sdk
 
 from app.core.config import settings
@@ -21,6 +22,7 @@ from app.api.endpoints import (
 app = FastAPI()
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 if settings.SENTRY_DSN:
     sentry_sdk.init(
@@ -28,11 +30,9 @@ if settings.SENTRY_DSN:
         traces_sample_rate=1.0,
     )
 
-origins = ["http://localhost:3000", "https://*.vercel.app"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],

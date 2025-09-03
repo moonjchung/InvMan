@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class PurchaseOrderLineItemBase(BaseModel):
     item_id: int
-    quantity_ordered: int
-    unit_cost: float
+    quantity_ordered: int = Field(..., gt=0)
+    unit_cost: float = Field(..., ge=0)
 
 class PurchaseOrderLineItemCreate(PurchaseOrderLineItemBase):
     pass
@@ -17,4 +17,4 @@ class PurchaseOrderLineItem(PurchaseOrderLineItemBase):
 
 class PurchaseOrderLineItemReceive(BaseModel):
     id: int
-    quantity: int
+    quantity: int = Field(..., gt=0)

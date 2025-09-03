@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
+import { login } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
 
     const body = new URLSearchParams({
       username: email,
@@ -29,9 +31,9 @@ export default function LoginPage() {
       const data = await response.json();
       localStorage.setItem('token', data.access_token);
       router.push('/');
-    } else {
+    } catch (error) {
       // Handle error
-      console.error('Login failed');
+      console.error('Login failed', error);
     }
   };
 

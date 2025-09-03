@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 
 class InventoryTransactionBase(BaseModel):
@@ -22,5 +22,5 @@ class InventoryTransaction(InventoryTransactionBase):
         from_attributes = True
 
 class StockAdjustment(BaseModel):
-    quantity_change: int
+    quantity_change: int = Field(..., ne=0)
     notes: str | None = None

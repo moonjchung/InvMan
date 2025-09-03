@@ -1,4 +1,5 @@
 import io
+import re
 import barcode
 from barcode.writer import ImageWriter
 from reportlab.pdfgen import canvas
@@ -9,6 +10,10 @@ from app.models.item import Item
 
 def generate_item_label(item: Item) -> io.BytesIO:
     """Generates a PDF label for a given item."""
+    # Validate SKU
+    if not re.match(r"^[A-Za-z0-9-]{1,50}$", item.sku):
+        raise ValueError("Invalid SKU format")
+        
     # Create an in-memory buffer for the PDF
     pdf_buffer = io.BytesIO()
 

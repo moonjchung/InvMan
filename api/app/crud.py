@@ -53,6 +53,17 @@ def get_items(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Item).offset(skip).limit(limit).all()
 
 
+def get_items_generator(db: Session, chunk_size: int = 1000):
+    offset = 0
+    while True:
+        items = db.query(Item).offset(offset).limit(chunk_size).all()
+        if not items:
+            break
+        for item in items:
+            yield item
+        offset += chunk_size
+
+
 def get_item_by_sku(db: Session, sku: str):
     return db.query(Item).filter(Item.sku == sku).first()
 
@@ -138,8 +149,7 @@ def create_purchase_order(db: Session, po_in: PurchaseOrderCreate) -> PurchaseOr
     po_data = po_in.dict(exclude={"line_items"})
     db_po = PurchaseOrder(**po_data)
     db.add(db_po)
-    db.commit()
-    db.refresh(db_po)
+    db.flush()
 
     for line_item_in in po_in.line_items:
         db_line_item = PurchaseOrderLineItem(
@@ -173,29 +183,42 @@ def receive_purchase_order(db: Session, po_id: int, received_items: List[Purchas
             # Or raise an exception
             continue
 
-        item = db.query(Item).filter(Item.id == line_item.item_id).with_for_update().first()
+        item = (
+            db.query(Item)
+            .filter(Item.id == line_item.item_id)
+            .with_for_update()
+            .first()
+        )
+
+        remaining_qty = line_item.quantity_ordered - line_item.quantity_received
+        received_qty = min(received_item.quantity, remaining_qty)
+        if received_qty <= 0:
+            continue
 
         # Calculate new average cost
         old_stock = item.stock_level
         old_avg_cost = item.average_cost if item.average_cost is not None else 0.0
-        received_qty = received_item.quantity
-        received_cost = line_item.unit_cost if line_item.unit_cost is not None else 0.0
-        
+        received_cost = (
+            line_item.unit_cost if line_item.unit_cost is not None else 0.0
+        )
+
         new_stock_level = old_stock + received_qty
         if new_stock_level > 0:
-            new_avg_cost = ((old_stock * old_avg_cost) + (received_qty * received_cost)) / new_stock_level
+            new_avg_cost = (
+                (old_stock * old_avg_cost) + (received_qty * received_cost)
+            ) / new_stock_level
             item.average_cost = new_avg_cost
         elif received_qty > 0:
             item.average_cost = received_cost
 
-        line_item.quantity_received += received_item.quantity
-        item.stock_level += received_item.quantity
+        line_item.quantity_received += received_qty
+        item.stock_level += received_qty
 
         transaction = InventoryTransaction(
             item_id=item.id,
             user_id=user_id,
             type="receipt",
-            quantity_change=received_item.quantity,
+            quantity_change=received_qty,
             new_quantity=item.stock_level,
             notes=f"PO #{db_po.id}",
         )
