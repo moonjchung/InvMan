@@ -1,11 +1,11 @@
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     APP_NAME: str = "Inventory Management API"
     ENVIRONMENT: str = "development"
     API_VERSION: str = "0.1.0"
-    DATABASE_URL: str = "sqlite:///./test.db"
+    DATABASE_URL: str | None = None
     SECRET_KEY: str = "changeme"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     FIRST_STAFF_EMAIL: EmailStr = "staff@example.com"
     FIRST_STAFF_PASSWORD: str = "staff"
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def default_database_url(cls, v: str | None) -> str:
+        return v or "sqlite:///./test.db"
 
     class Config:
         env_file = ".env"
