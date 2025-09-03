@@ -38,7 +38,6 @@ async def login_for_access_token(
         )
     if not login_data.email or not login_data.password:
         raise HTTPException(status_code=422, detail="Missing email or password")
-
     user = crud.authenticate_user(
         db, email=login_data.email, password=login_data.password
     )
