@@ -17,15 +17,6 @@ export default function PurchaseOrdersPage() {
   });
 
   const { data: user } = useQuery({ queryKey: ['user'] });
-
-  const canManage = user && (user.role === 'admin' || user.role === 'manager');
-
-  const { data: user } = useQuery({ queryKey: ['user'] });
-
-  const canManage = user && (user.role === 'admin' || user.role === 'manager');
-
-  const { data: user } = useQuery({ queryKey: ['user'] });
-
   const canManage = user && (user.role === 'admin' || user.role === 'manager');
 
   const handleAdd = () => {

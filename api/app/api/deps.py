@@ -4,7 +4,6 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
-from app.core import security
 from app.core.config import settings
 from app.deps import get_db
 

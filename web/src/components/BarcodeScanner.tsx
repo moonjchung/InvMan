@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/browser';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import styles from './BarcodeScanner.module.css';
 
 export default function BarcodeScanner({ onScan }: { onScan: (result: string) => void }) {
@@ -16,7 +16,7 @@ export default function BarcodeScanner({ onScan }: { onScan: (result: string) =>
           onScan(result.getText());
           setIsScanning(false);
         }
-        if (err && !(err instanceof NotFoundException)) {
+        if (err && err.name !== 'NotFoundException') {
           console.error(err);
         }
       });

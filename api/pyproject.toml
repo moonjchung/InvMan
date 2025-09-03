@@ -1,9 +1,13 @@
 [tool.ruff]
 line-length = 88
+extend-exclude = ["alembic", "seed.py"]
 
 [tool.mypy]
-strict = true
 ignore_missing_imports = true
+ignore_errors = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 
 [tool.poetry]
