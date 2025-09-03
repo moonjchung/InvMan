@@ -29,13 +29,14 @@ async function request(endpoint: string, options: RequestInit = {}, contentType:
 // Auth
 export const getUsersMe = () => request('/users/me');
 export const login = (data: any) => {
-  const body = new URLSearchParams();
-  body.append('username', data.username);
-  body.append('password', data.password);
-  return request('/auth/login', {
-    method: 'POST',
-    body,
-  }, 'application/x-www-form-urlencoded');
+  return request(
+    '/auth/login',
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+    'application/json'
+  );
 };
 
 // Settings

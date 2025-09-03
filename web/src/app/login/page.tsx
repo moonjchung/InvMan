@@ -14,7 +14,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      await login({ username: email, password });
+      await login({ email, password });
       router.push('/');
     } catch (error) {
       // Handle error
