@@ -1,30 +1,47 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, func
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+
+from datetime import datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .category import Category
+    from .supplier import Supplier
+    from .inventory_transaction import InventoryTransaction
+    from .sales_order_line_item import SalesOrderLineItem
+
 from app.db.base import Base
+
 
 class Item(Base):
     __tablename__ = "items"
 
-    id = Column(Integer, primary_key=True, index=True)
-    sku = Column(String, unique=True, index=True, nullable=False)
-    name = Column(String, nullable=False)
-    description = Column(String)
-    price = Column(Float)
-    average_cost = Column(Float, default=0.0)
-    stock_level = Column(Integer, nullable=False, default=0)
-    unit = Column(String)
-    
-    category_id = Column(Integer, ForeignKey("categories.id"))
-    category = relationship("Category", back_populates="items")
-    
-    supplier_id = Column(Integer, ForeignKey("suppliers.id"))
-    supplier = relationship("Supplier", back_populates="items")
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    sku: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    average_cost: Mapped[float] = mapped_column(Float, default=0.0)
+    stock_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    unit: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    reorder_point = Column(Integer)
-    is_active = Column(Boolean(), default=True)
+    category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
+    category: Mapped["Category" | None] = relationship("Category", back_populates="items")
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    supplier_id: Mapped[int | None] = mapped_column(ForeignKey("suppliers.id"))
+    supplier: Mapped["Supplier" | None] = relationship("Supplier", back_populates="items")
 
-    transactions = relationship("InventoryTransaction", back_populates="item")
-    sales_order_line_items = relationship("SalesOrderLineItem", back_populates="item")
+    reorder_point: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), onupdate=func.now())
+
+    transactions: Mapped[list["InventoryTransaction"]] = relationship(
+        "InventoryTransaction", back_populates="item"
+    )
+    sales_order_line_items: Mapped[list["SalesOrderLineItem"]] = relationship(
+        "SalesOrderLineItem", back_populates="item"
+    )

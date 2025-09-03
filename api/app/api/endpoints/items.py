@@ -1,10 +1,11 @@
-from typing import List
 import csv
 import io
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+
+from typing import Any, Iterator, cast
 
 from app import crud, models, schemas
 from app.api.deps import get_current_active_user, get_current_active_manager_user
@@ -20,7 +21,7 @@ def import_csv(
     db: Session = Depends(get_db),
     file: UploadFile = File(...),
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> dict[str, str]:
     """
     Import items from CSV.
     """
@@ -28,7 +29,7 @@ def import_csv(
         contents = file.file.read().decode("utf-8")
         reader = csv.DictReader(io.StringIO(contents))
         for row in reader:
-            item_in = schemas.ItemCreate(**row)
+            item_in = schemas.ItemCreate(**cast(dict[str, Any], row))
             crud.upsert_item(db, item_in=item_in)
     except Exception:
         # TODO: Add logging
@@ -44,11 +45,11 @@ def import_csv(
 def export_csv(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> StreamingResponse:
     """
     Export items to CSV.
     """
-    def iter_items():
+    def iter_items() -> Iterator[str]:
         output = io.StringIO()
         writer = csv.writer(output)
 
@@ -68,13 +69,13 @@ def export_csv(
     return StreamingResponse(iter_items(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=items.csv"})
 
 
-@router.get("/", response_model=List[schemas.Item])
+@router.get("/", response_model=list[schemas.Item])
 def read_items(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> list[models.Item]:
     """
     Retrieve items.
     """
@@ -88,7 +89,7 @@ def create_item(
     db: Session = Depends(get_db),
     item_in: schemas.ItemCreate,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.Item:
     """
     Create new item.
     """
@@ -102,7 +103,7 @@ def read_item_by_sku(
     db: Session = Depends(get_db),
     sku: str,
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> models.Item:
     """
     Get item by SKU.
     """
@@ -118,7 +119,7 @@ def read_item(
     db: Session = Depends(get_db),
     item_id: int,
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> models.Item:
     """
     Get item by ID.
     """
@@ -135,7 +136,7 @@ def update_item(
     item_id: int,
     item_in: schemas.ItemUpdate,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.Item:
     """
     Update an item.
     """
@@ -143,6 +144,7 @@ def update_item(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     item = crud.update_item(db=db, item_id=item_id, item=item_in)
+    assert item is not None
     return item
 
 
@@ -152,7 +154,7 @@ def delete_item(
     db: Session = Depends(get_db),
     item_id: int,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.Item:
     """
     Delete an item.
     """
@@ -160,6 +162,7 @@ def delete_item(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     item = crud.delete_item(db=db, item_id=item_id)
+    assert item is not None
     return item
 
 
@@ -170,7 +173,7 @@ def adjust_stock(
     item_id: int,
     adjustment_in: StockAdjustment,
     current_user: models.User = Depends(get_current_active_manager_user),
-):
+) -> models.Item:
     """
     Adjust stock for an item.
     """
@@ -181,7 +184,7 @@ def adjust_stock(
     updated_item = crud.adjust_stock(
         db=db, item_id=item_id, adjustment=adjustment_in, user_id=current_user.id
     )
-    if not updated_item:
+    if updated_item is None:
         raise HTTPException(status_code=400, detail="Stock level cannot be negative.")
     return updated_item
 
@@ -192,7 +195,7 @@ def get_item_label(
     db: Session = Depends(get_db),
     item_id: int,
     current_user: models.User = Depends(get_current_active_user),
-):
+) -> StreamingResponse:
     """
     Generate and return a PDF label for an item.
     """

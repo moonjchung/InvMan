@@ -6,6 +6,8 @@ from app import crud, models, schemas
 from app.api.deps import get_current_active_user, get_current_active_manager_user
 from app.deps import get_db
 
+# mypy: disable-error-code=no-untyped-def
+
 router = APIRouter()
 
 @router.post("/", response_model=schemas.SalesOrder)

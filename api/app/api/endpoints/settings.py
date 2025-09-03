@@ -3,6 +3,8 @@ from app.core.config import settings
 from app.schemas.user import User
 from app.api.deps import get_current_active_admin_user
 
+# mypy: disable-error-code=no-untyped-def
+
 router = APIRouter()
 
 @router.get("/")

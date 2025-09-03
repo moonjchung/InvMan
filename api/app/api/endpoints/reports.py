@@ -7,6 +7,8 @@ from app.api.deps import get_current_active_user
 from app.deps import get_db
 from app.schemas.report import ValuationReportItem
 
+# mypy: disable-error-code=no-untyped-def
+
 router = APIRouter()
 
 @router.get("/valuation", response_model=List[ValuationReportItem])

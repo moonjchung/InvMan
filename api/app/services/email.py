@@ -1,7 +1,9 @@
 from postmarker.core import PostmarkClient
+
 from app.core.config import settings
 
-def send_low_stock_alert(item_name: str, item_sku: str, stock_level: int):
+
+def send_low_stock_alert(item_name: str, item_sku: str, stock_level: int) -> None:
     if not settings.POSTMARK_SERVER_TOKEN:
         print("POSTMARK_SERVER_TOKEN not set, skipping email.")
         return

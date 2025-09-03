@@ -10,12 +10,12 @@ os.environ.setdefault("FIRST_MANAGER_PASSWORD", "password")
 os.environ.setdefault("FIRST_STAFF_EMAIL", "staff@example.com")
 os.environ.setdefault("FIRST_STAFF_PASSWORD", "password")
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
 
-from app.db.base import Base
-from app import models, crud
-from app.schemas.purchase_order_line_item import PurchaseOrderLineItemReceive
+from app.db.base import Base  # noqa: E402
+from app import models, crud  # noqa: E402
+from app.schemas.purchase_order_line_item import PurchaseOrderLineItemReceive  # noqa: E402
 
 def _init_db():
     engine = create_engine("sqlite:///:memory:")

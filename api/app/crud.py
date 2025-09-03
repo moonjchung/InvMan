@@ -1,6 +1,8 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from collections.abc import Generator
 from typing import List
+
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
 from app.models.item import Item
@@ -22,15 +24,15 @@ from app.schemas.purchase_order_line_item import PurchaseOrderLineItemReceive
 from app.schemas.sales_order import SalesOrderCreate
 from app.schemas.dashboard import DashboardSummary
 from app.services.email import send_low_stock_alert
-
-
-def get_user_by_email(db: Session, email: str):
+def get_user_by_email(db: Session, email: str) -> User | None:
     return db.query(User).filter(User.email == email).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100):
+
+def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
     return db.query(User).offset(skip).limit(limit).all()
 
-def create_user(db: Session, user: UserCreate):
+
+def create_user(db: Session, user: UserCreate) -> User:
     hashed_password = get_password_hash(user.password)
     db_user = User(email=user.email, hashed_password=hashed_password)
     db.add(db_user)
@@ -38,22 +40,20 @@ def create_user(db: Session, user: UserCreate):
     db.refresh(db_user)
     return db_user
 
-def create_user_by_admin(db: Session, user: UserCreateByAdmin):
+def create_user_by_admin(db: Session, user: UserCreateByAdmin) -> User:
     hashed_password = get_password_hash(user.password)
     db_user = User(email=user.email, hashed_password=hashed_password, role=user.role)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
-
-
-def get_items(db: Session, skip: int = 0, limit: int = 100):
+def get_items(db: Session, skip: int = 0, limit: int = 100) -> List[Item]:
     if limit is None:
         return db.query(Item).offset(skip).all()
     return db.query(Item).offset(skip).limit(limit).all()
 
 
-def get_items_generator(db: Session, chunk_size: int = 1000):
+def get_items_generator(db: Session, chunk_size: int = 1000) -> Generator[Item, None, None]:
     offset = 0
     while True:
         items = db.query(Item).offset(offset).limit(chunk_size).all()
@@ -64,7 +64,7 @@ def get_items_generator(db: Session, chunk_size: int = 1000):
         offset += chunk_size
 
 
-def get_item_by_sku(db: Session, sku: str):
+def get_item_by_sku(db: Session, sku: str) -> Item | None:
     return db.query(Item).filter(Item.sku == sku).first()
 
 def upsert_item(db: Session, item_in: ItemCreate) -> Item:
@@ -80,17 +80,18 @@ def upsert_item(db: Session, item_in: ItemCreate) -> Item:
     else:
         return create_item(db, item=item_in)
 
-def create_item(db: Session, item: ItemCreate):
+def create_item(db: Session, item: ItemCreate) -> Item:
     db_item = Item(**item.dict())
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
     return db_item
 
-def get_item(db: Session, item_id: int):
+def get_item(db: Session, item_id: int) -> Item | None:
     return db.query(Item).filter(Item.id == item_id).first()
 
-def update_item(db: Session, item_id: int, item: ItemUpdate):
+
+def update_item(db: Session, item_id: int, item: ItemUpdate) -> Item | None:
     db_item = db.query(Item).filter(Item.id == item_id).first()
     if db_item:
         update_data = item.dict(exclude_unset=True)
@@ -100,14 +101,18 @@ def update_item(db: Session, item_id: int, item: ItemUpdate):
         db.refresh(db_item)
     return db_item
 
-def delete_item(db: Session, item_id: int):
+
+def delete_item(db: Session, item_id: int) -> Item | None:
     db_item = db.query(Item).filter(Item.id == item_id).first()
     if db_item:
         db.delete(db_item)
         db.commit()
     return db_item
 
-def adjust_stock(db: Session, item_id: int, adjustment: StockAdjustment, user_id: int) -> Item:
+
+def adjust_stock(
+    db: Session, item_id: int, adjustment: StockAdjustment, user_id: int
+) -> Item | None:
     """
     Adjust stock for an item. Creates an inventory transaction.
     This function is transactional.
@@ -172,7 +177,12 @@ def update_purchase_order(db: Session, po_id: int, po_in: PurchaseOrderUpdate) -
     db.refresh(db_po)
     return db_po
 
-def receive_purchase_order(db: Session, po_id: int, received_items: List[PurchaseOrderLineItemReceive], user_id: int) -> PurchaseOrder:
+def receive_purchase_order(
+    db: Session,
+    po_id: int,
+    received_items: List[PurchaseOrderLineItemReceive],
+    user_id: int,
+) -> PurchaseOrder | None:
     db_po = db.query(PurchaseOrder).filter(PurchaseOrder.id == po_id).with_for_update().first()
     if not db_po:
         return None
@@ -306,20 +316,25 @@ def fulfill_sales_order(db: Session, so_id: int, user_id: int) -> SalesOrder | N
     db.refresh(db_so)
     return db_so
 
-def get_category(db: Session, category_id: int):
+def get_category(db: Session, category_id: int) -> Category | None:
     return db.query(Category).filter(Category.id == category_id).first()
 
-def get_categories(db: Session, skip: int = 0, limit: int = 100):
+
+def get_categories(db: Session, skip: int = 0, limit: int = 100) -> List[Category]:
     return db.query(Category).offset(skip).limit(limit).all()
 
-def create_category(db: Session, category: CategoryCreate):
+
+def create_category(db: Session, category: CategoryCreate) -> Category:
     db_category = Category(name=category.name)
     db.add(db_category)
     db.commit()
     db.refresh(db_category)
     return db_category
 
-def update_category(db: Session, category_id: int, category: CategoryUpdate):
+
+def update_category(
+    db: Session, category_id: int, category: CategoryUpdate
+) -> Category | None:
     db_category = db.query(Category).filter(Category.id == category_id).first()
     if db_category:
         update_data = category.dict(exclude_unset=True)
@@ -329,27 +344,34 @@ def update_category(db: Session, category_id: int, category: CategoryUpdate):
         db.refresh(db_category)
     return db_category
 
-def delete_category(db: Session, category_id: int):
+
+def delete_category(db: Session, category_id: int) -> Category | None:
     db_category = db.query(Category).filter(Category.id == category_id).first()
     if db_category:
         db.delete(db_category)
         db.commit()
     return db_category
 
-def get_supplier(db: Session, supplier_id: int):
+
+def get_supplier(db: Session, supplier_id: int) -> Supplier | None:
     return db.query(Supplier).filter(Supplier.id == supplier_id).first()
 
-def get_suppliers(db: Session, skip: int = 0, limit: int = 100):
+
+def get_suppliers(db: Session, skip: int = 0, limit: int = 100) -> List[Supplier]:
     return db.query(Supplier).offset(skip).limit(limit).all()
 
-def create_supplier(db: Session, supplier: SupplierCreate):
+
+def create_supplier(db: Session, supplier: SupplierCreate) -> Supplier:
     db_supplier = Supplier(name=supplier.name)
     db.add(db_supplier)
     db.commit()
     db.refresh(db_supplier)
     return db_supplier
 
-def update_supplier(db: Session, supplier_id: int, supplier: SupplierUpdate):
+
+def update_supplier(
+    db: Session, supplier_id: int, supplier: SupplierUpdate
+) -> Supplier | None:
     db_supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
     if db_supplier:
         update_data = supplier.dict(exclude_unset=True)
@@ -359,7 +381,8 @@ def update_supplier(db: Session, supplier_id: int, supplier: SupplierUpdate):
         db.refresh(db_supplier)
     return db_supplier
 
-def delete_supplier(db: Session, supplier_id: int):
+
+def delete_supplier(db: Session, supplier_id: int) -> Supplier | None:
     db_supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
     if db_supplier:
         db.delete(db_supplier)

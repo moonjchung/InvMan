@@ -1,15 +1,29 @@
-from sqlalchemy import Column, Integer, ForeignKey, Float
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Float, ForeignKey, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .item import Item
+    from .sales_order import SalesOrder
+
 from app.db.base import Base
+
 
 class SalesOrderLineItem(Base):
     __tablename__ = "sales_order_line_items"
 
-    id = Column(Integer, primary_key=True, index=True)
-    sales_order_id = Column(Integer, ForeignKey("sales_orders.id"), nullable=False)
-    item_id = Column(Integer, ForeignKey("items.id"), nullable=False)
-    quantity_ordered = Column(Integer, nullable=False)
-    unit_price = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    sales_order_id: Mapped[int] = mapped_column(
+        ForeignKey("sales_orders.id"), nullable=False
+    )
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"), nullable=False)
+    quantity_ordered: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price: Mapped[float] = mapped_column(Float, nullable=False)
 
-    sales_order = relationship("SalesOrder", back_populates="line_items")
-    item = relationship("Item")
+    sales_order: Mapped["SalesOrder"] = relationship(
+        "SalesOrder", back_populates="line_items"
+    )
+    item: Mapped["Item"] = relationship("Item")
