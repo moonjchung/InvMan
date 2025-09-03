@@ -56,3 +56,4 @@ build-backend = "poetry.core.masonry.api"
 [[tool.poetry.source]]
 name = "apryse"
 url = "https://pypi.apryse.com"
+priority = "supplemental"
